@@ -93,6 +93,20 @@ public slots:
     void deselectWindow();
     void loadFromFile();
     void saveToFile();
+    void transformPixel();
+    void thresholding();
+    void equalize();
+    void applyGaussianBlur();
+    void applyMedianBlur();
+    void linearFilter();
+    void dilate();
+    void erode();
+    void applySeveral();
+
+    void setPixelTransformation();
+    void setKernel();
+    void setOperationOrder();
+
 };
 
 

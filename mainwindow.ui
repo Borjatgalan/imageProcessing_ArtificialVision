@@ -117,7 +117,7 @@
    <property name="frameShadow">
     <enum>QFrame::Raised</enum>
    </property>
-   <widget class="QComboBox" name="operationComboBox">
+   <widget class="QComboBox" name="selectOperation">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -371,7 +371,7 @@
   <tabstop>colorButton</tabstop>
   <tabstop>loadButton</tabstop>
   <tabstop>saveButton</tabstop>
-  <tabstop>operationComboBox</tabstop>
+  <tabstop>selectOperation</tabstop>
   <tabstop>gaussWidthBox</tabstop>
   <tabstop>thresholdSpinBox</tabstop>
   <tabstop>pixelTButton</tabstop>
