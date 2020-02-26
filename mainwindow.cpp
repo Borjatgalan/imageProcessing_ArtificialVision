@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -28,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
     connect(visorS,SIGNAL(windowSelected(QPointF, int, int)),this,SLOT(selectWindow(QPointF, int, int)));
     connect(visorS,SIGNAL(pressEvent()),this,SLOT(deselectWindow()));
+    connect(ui->loadButton,SIGNAL(pressed()),this,SLOT(loadFromFile()));
+    connect(ui->saveButton,SIGNAL(pressed()),this,SLOT(saveToFile()));
 
     timer.start(30);
 
@@ -158,5 +161,62 @@ void MainWindow::selectWindow(QPointF p, int w, int h)
 void MainWindow::deselectWindow()
 {
     winSelected = false;
+}
+
+void MainWindow::loadFromFile()
+{
+    disconnect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
+
+    Mat image;
+    QString fileName = QFileDialog::getOpenFileName(this,tr("Open"), "/home",tr("Images (*.jpg *.png "
+                                                                                "*.jpeg *.gif);;All Files(*)"));
+    image = cv::imread(fileName.toStdString());
+
+    if (fileName.isEmpty())
+            return;
+        else {
+            QFile file(fileName);
+            if (!file.open(QIODevice::ReadOnly)) {
+                QMessageBox::information(this, tr("Unable to open file"), file.errorString());
+                return;
+            }
+    ui->captureButton->setChecked(false);
+    ui->captureButton->setText("Start capture");
+    cv::resize(image, colorImage, Size(320, 240));
+    cvtColor(colorImage, colorImage, COLOR_BGR2RGB);
+    cvtColor(colorImage, grayImage, COLOR_RGB2GRAY);
+
+    connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
+
+}
+}
+
+void MainWindow::saveToFile()
+{
+    disconnect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
+    Mat save_image;
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image File"),
+                                                QString(),
+                                                tr("JPG (*.jpg);; PNG (*.png);;"
+                                                   "JPEG(*.jpeg);; GIF(*.gif);; All Files (*)"));
+    if(ui->colorButton->isChecked())
+        cvtColor(destColorImage, save_image, COLOR_RGB2BGR);
+
+    else
+        cvtColor(destGrayImage, save_image, COLOR_GRAY2BGR);
+
+    if (fileName.isEmpty())
+            return;
+        else {
+            QFile file(fileName);
+            if (!file.open(QIODevice::WriteOnly)) {
+                QMessageBox::information(this, tr("Unable to open file"),
+                    file.errorString());
+                return;
+            }
+         }
+    cv::imwrite(fileName.toStdString(), save_image);
+
+    connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
 }
 
