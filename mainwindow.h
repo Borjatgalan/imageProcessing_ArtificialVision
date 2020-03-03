@@ -80,8 +80,12 @@ private:
     VideoCapture *cap;
     ImgViewer *visorS, *visorD, *visorHistoS, *visorHistoD;
     Mat colorImage, grayImage, destColorImage, destGrayImage;
+    Mat destColorImageAux, destGrayImageAux;
     bool winSelected;
     Rect imageWindow;
+
+    std::vector<uchar> tablaLUT;
+    Mat kernel;
 
     void updateHistograms(Mat image, ImgViewer * visor);
 
@@ -94,7 +98,7 @@ public slots:
     void loadFromFile();
     void saveToFile();
     void transformPixel();
-    void thresholding();
+    void thresholding(Mat image, Mat destImage);
     void equalize();
     void applyGaussianBlur();
     void applyMedianBlur();
@@ -107,6 +111,7 @@ public slots:
     void setKernel();
     void setOperationOrder();
 
+    void selectOperation(Mat image, Mat destImage);
 };
 
 

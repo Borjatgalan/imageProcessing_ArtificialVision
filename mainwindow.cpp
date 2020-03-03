@@ -15,6 +15,9 @@ MainWindow::MainWindow(QWidget *parent) :
     grayImage.create(240,320,CV_8UC1);
     destColorImage.create(240,320,CV_8UC3);
     destGrayImage.create(240,320,CV_8UC1);
+    //Auxiliares
+    destColorImageAux.create(240,320,CV_8UC3);
+    destGrayImageAux.create(240,320,CV_8UC1);
 
     visorHistoS = new ImgViewer(260,150, (QImage *) NULL, ui->histoFrameS);
     visorHistoD = new ImgViewer(260,150, (QImage *) NULL, ui->histoFrameD);
@@ -29,9 +32,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
     connect(visorS,SIGNAL(windowSelected(QPointF, int, int)),this,SLOT(selectWindow(QPointF, int, int)));
     connect(visorS,SIGNAL(pressEvent()),this,SLOT(deselectWindow()));
+    //Connect Load and save from file
     connect(ui->loadButton,SIGNAL(pressed()),this,SLOT(loadFromFile()));
     connect(ui->saveButton,SIGNAL(pressed()),this,SLOT(saveToFile()));
 
+    //TODO connections
     connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(transformPixel()));
     connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(thresholding()));
     connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(equalize()));
@@ -42,9 +47,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(erode()));
     connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(applySeveral()));
 
-    connect(ui->pixelTButton,SIGNAL(pressed()),this,SLOT(setPixelTransformation()));
-    connect(ui->kernelButton,SIGNAL(pressed()),this,SLOT(setKernel()));
-    connect(ui->operOrderButton,SIGNAL(pressed()),this,SLOT(setOperationOrder()));
+
+    connect(ui->pixelTButton,SIGNAL(clicked()),this,SLOT(setPixelTransformation()));
+    connect(ui->kernelButton,SIGNAL(clicked()),this,SLOT(setKernel()));
+    connect(ui->operOrderButton,SIGNAL(clicked()),this,SLOT(setOperationOrder()));
 
 
     timer.start(30);
@@ -76,13 +82,19 @@ void MainWindow::compute()
 
 
     //Procesamiento
-
+    //QComboBox box;
+    //box.currentIndex()
 
     //Actualización de los visores
     if(!ui->colorButton->isChecked())
     {
+        selectOperation(grayImage, destGrayImage);
         updateHistograms(grayImage, visorHistoS);
         updateHistograms(destGrayImage, visorHistoD);
+    }else{
+        selectOperation(colorImage, destColorImage);
+        updateHistograms(colorImage, visorHistoS);
+        updateHistograms(destColorImage, visorHistoD);
     }
 
     if(winSelected)
@@ -238,11 +250,14 @@ void MainWindow::saveToFile()
 void MainWindow::transformPixel()
 {
     printf("Transform Pixel... \n");
+
 }
 
-void MainWindow::thresholding()
+void MainWindow::thresholding(Mat image, Mat destImage)
 {
     printf("Thresholding... \n");
+    cv::threshold(image, destImage, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
+    destImage.copyTo(destGrayImageAux);
 }
 
 void MainWindow::equalize()
@@ -296,6 +311,42 @@ void MainWindow::setKernel()
 void MainWindow::setOperationOrder()
 {
     printf("set operation\n");
+}
+
+void MainWindow::selectOperation(Mat image, Mat destImage)
+{
+
+    switch(ui->selectOperation->currentIndex()){
+    case 0:
+        transformPixel();
+        break;
+    case 1:
+        thresholding(image, destImage);
+        break;
+    case 2:
+        equalize();
+        break;
+    case 3:
+        applyGaussianBlur();
+        break;
+    case 4:
+        applyMedianBlur();
+        break;
+    case 5:
+        linearFilter();
+        break;
+    case 6:
+        dilate();
+        break;
+    case 7:
+        erode();
+        break;
+    case 8:
+        applySeveral();
+        break;
+
+
+    }
 }
 
 
