@@ -26,6 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
     visorS = new ImgViewer(&grayImage, ui->imageFrameS);
     visorD = new ImgViewer(&destGrayImage, ui->imageFrameD);
 
+    //Inicializacion de la matriz de kernels
+    kernel.create(3,3,CV_32F);
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
