@@ -11,6 +11,8 @@ MainWindow::MainWindow(QWidget *parent) :
     cap = new VideoCapture(0);
     winSelected = false;
 
+    //Todo hacer kernel
+
     colorImage.create(240,320,CV_8UC3);
     grayImage.create(240,320,CV_8UC1);
     destColorImage.create(240,320,CV_8UC3);
@@ -239,27 +241,24 @@ void MainWindow::saveToFile()
 
 void MainWindow::transformPixel()
 {
-    printf("Transform Pixel... \n");
+
 
 }
 
 void MainWindow::thresholding(Mat image, Mat destImage)
 {
-    printf("Thresholding... \n");
     cv::threshold(image, destImage, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
     destImage.copyTo(destGrayImageAux);
 }
 
 void MainWindow::equalize(Mat image, Mat destImage)
 {
-    printf("Equalize... \n");
     cv::equalizeHist(image, destImage);
     destImage.copyTo(destGrayImageAux);
 }
 
 void MainWindow::applyGaussianBlur(Mat image, Mat destImage)
 {
-    printf("Gaussian Blur... \n");
     double gaussValue = ui->gaussWidthBox->value()/5.0;
     cv::GaussianBlur(image, destImage, Size(ui->gaussWidthBox->value(), ui->gaussWidthBox->value()),gaussValue);
     destGrayImage.copyTo(destGrayImageAux);
@@ -268,7 +267,6 @@ void MainWindow::applyGaussianBlur(Mat image, Mat destImage)
 
 void MainWindow::applyMedianBlur(Mat image, Mat destImage)
 {
-    printf("Median Blur... \n");
     cv::medianBlur(image, destImage, 3);
     destGrayImage.copyTo(destGrayImageAux);
 }
@@ -289,36 +287,35 @@ void MainWindow::setKernel()
 
 void MainWindow::linearFilter(Mat image, Mat destImage)
 {
-    printf("Linear Filter... \n");
     setKernel();
     cv::filter2D(image, destImage, CV_8U, kernel, Point(-1,-1), lFilterDialog.addedVBox->value());
 }
 
 void MainWindow::dilate(Mat image, Mat destImage)
 {
-    printf("Dilate... \n");
+
 }
 
 void MainWindow::erode(Mat image, Mat destImage)
 {
-    printf("Erode... \n");
+
 }
 
 
 void MainWindow::applySeveral(Mat image, Mat destImage)
 {
-    printf("Apply several... \n");
+
 }
 
 void MainWindow::setPixelTransformation()
 {
-    printf("set pixel trans\n");
+
 }
 
 
 void MainWindow::setOperationOrder()
 {
-    printf("set operation\n");
+
 }
 
 void MainWindow::selectOperation(Mat image, Mat destImage)
