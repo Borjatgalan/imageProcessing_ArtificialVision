@@ -36,17 +36,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->loadButton,SIGNAL(pressed()),this,SLOT(loadFromFile()));
     connect(ui->saveButton,SIGNAL(pressed()),this,SLOT(saveToFile()));
 
-    //TODO connections
-    connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(transformPixel()));
-    connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(thresholding()));
-    connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(equalize()));
-    connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(applyGaussianBlur()));
-    connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(applyMedianBlur()));
-    connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(linearFilter()));
-    connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(dilate()));
-    connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(erode()));
-    connect(ui->selectOperation,SIGNAL(activated(int)),this, SLOT(applySeveral()));
-
 
     connect(ui->pixelTButton,SIGNAL(clicked()),this,SLOT(setPixelTransformation()));
     connect(ui->kernelButton,SIGNAL(clicked()),this,SLOT(setKernel()));
@@ -224,8 +213,7 @@ void MainWindow::saveToFile()
     Mat save_image;
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image File"),
                                                     QString(),
-                                                    tr("JPG (*.jpg);; PNG (*.png);;"
-                                                       "JPEG(*.jpeg);; GIF(*.gif);; All Files (*)"));
+                                                    tr("JPG (*.JPG) ; jpg (*.jpg); png (*.png); jpeg(*.jpeg); gif(*.gif); All Files (*)"));
     if(ui->colorButton->isChecked())
         cvtColor(destColorImage, save_image, COLOR_RGB2BGR);
 
@@ -260,53 +248,71 @@ void MainWindow::thresholding(Mat image, Mat destImage)
     destImage.copyTo(destGrayImageAux);
 }
 
-void MainWindow::equalize()
+void MainWindow::equalize(Mat image, Mat destImage)
 {
     printf("Equalize... \n");
+    cv::equalizeHist(image, destImage);
+    destImage.copyTo(destGrayImageAux);
 }
 
-void MainWindow::applyGaussianBlur()
+void MainWindow::applyGaussianBlur(Mat image, Mat destImage)
 {
     printf("Gaussian Blur... \n");
+    double gaussValue = ui->gaussWidthBox->value()/5.0;
+    cv::GaussianBlur(image, destImage, Size(ui->gaussWidthBox->value(), ui->gaussWidthBox->value()),gaussValue);
+    destGrayImage.copyTo(destGrayImageAux);
+
 }
 
-void MainWindow::applyMedianBlur()
+void MainWindow::applyMedianBlur(Mat image, Mat destImage)
 {
     printf("Median Blur... \n");
+    cv::medianBlur(image, destImage, 3);
+    destGrayImage.copyTo(destGrayImageAux);
 }
 
-void MainWindow::linearFilter()
+void MainWindow::setKernel()
+{
+    printf("set kernel \n");
+    kernel.at<float>(0,0)=lFilterDialog.kernelBox11->value();
+    kernel.at<float>(0,1)=lFilterDialog.kernelBox12->value();
+    kernel.at<float>(0,2)=lFilterDialog.kernelBox13->value();
+    kernel.at<float>(1,0)=lFilterDialog.kernelBox21->value();
+    kernel.at<float>(1,1)=lFilterDialog.kernelBox22->value();
+    kernel.at<float>(1,2)=lFilterDialog.kernelBox23->value();
+    kernel.at<float>(2,0)=lFilterDialog.kernelBox31->value();
+    kernel.at<float>(2,1)=lFilterDialog.kernelBox32->value();
+    kernel.at<float>(2,2)=lFilterDialog.kernelBox33->value();
+}
+
+void MainWindow::linearFilter(Mat image, Mat destImage)
 {
     printf("Linear Filter... \n");
+    setKernel();
+    cv::filter2D(image, destImage, CV_8U, kernel, Point(-1,-1), lFilterDialog.addedVBox->value());
 }
 
-void MainWindow::dilate()
+void MainWindow::dilate(Mat image, Mat destImage)
 {
     printf("Dilate... \n");
 }
 
-void MainWindow::erode()
+void MainWindow::erode(Mat image, Mat destImage)
 {
     printf("Erode... \n");
 }
 
-void MainWindow::applySeveral()
+
+void MainWindow::applySeveral(Mat image, Mat destImage)
 {
     printf("Apply several... \n");
 }
-
-
-
 
 void MainWindow::setPixelTransformation()
 {
     printf("set pixel trans\n");
 }
 
-void MainWindow::setKernel()
-{
-    printf("set kernel \n");
-}
 
 void MainWindow::setOperationOrder()
 {
@@ -324,25 +330,25 @@ void MainWindow::selectOperation(Mat image, Mat destImage)
         thresholding(image, destImage);
         break;
     case 2:
-        equalize();
+        equalize(image, destImage);
         break;
     case 3:
-        applyGaussianBlur();
+        applyGaussianBlur(image, destImage);
         break;
     case 4:
-        applyMedianBlur();
+        applyMedianBlur(image, destImage);
         break;
     case 5:
-        linearFilter();
+        linearFilter(image, destImage);
         break;
     case 6:
-        dilate();
+        dilate(image, destImage);
         break;
     case 7:
-        erode();
+        erode(image, destImage);
         break;
     case 8:
-        applySeveral();
+        applySeveral(image, destImage);
         break;
 
 

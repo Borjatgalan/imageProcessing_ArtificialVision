@@ -99,13 +99,13 @@ public slots:
     void saveToFile();
     void transformPixel();
     void thresholding(Mat image, Mat destImage);
-    void equalize();
-    void applyGaussianBlur();
-    void applyMedianBlur();
-    void linearFilter();
-    void dilate();
-    void erode();
-    void applySeveral();
+    void equalize(Mat image, Mat destImage);
+    void applyGaussianBlur(Mat image, Mat destImage);
+    void applyMedianBlur(Mat image, Mat destImage);
+    void linearFilter(Mat image, Mat destImage);
+    void dilate(Mat image, Mat destImage);
+    void erode(Mat image, Mat destImage);
+    void applySeveral(Mat image, Mat destImage);
 
     void setPixelTransformation();
     void setKernel();
