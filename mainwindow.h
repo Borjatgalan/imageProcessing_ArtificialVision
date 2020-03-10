@@ -83,6 +83,7 @@ private:
     Mat destColorImageAux, destGrayImageAux;
     bool winSelected;
     Rect imageWindow;
+    OperOrderDialog operationOrder;
 
     std::vector<uchar> tablaLUT;
     Mat kernel;
