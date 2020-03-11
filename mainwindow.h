@@ -84,6 +84,7 @@ private:
     ImgViewer *visorS, *visorD, *visorHistoS, *visorHistoD;
     Mat colorImage, grayImage, destColorImage, destGrayImage;
     Mat destColorImageAux, destGrayImageAux;
+    Mat grayAux, colorAux;
     bool winSelected;
     Rect imageWindow;
 
@@ -112,10 +113,6 @@ public slots:
     void dilate(Mat image, Mat destImage);
     void erode(Mat image, Mat destImage);
     void applySeveral(Mat image, Mat destImage);
-
-    void setPixelTransformation();
-    void setKernel();
-    void setOperationOrder();
 
     void selectOperation(Mat image, Mat destImage, int option);
 };

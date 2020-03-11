@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->selectOperation->setCurrentIndex(-1);
+    ui->selectOperation->setCurrentIndex(0);
 
     cap = new VideoCapture(0);
     winSelected = false;
@@ -22,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //Auxiliares
     destColorImageAux.create(240,320,CV_8UC3);
     destGrayImageAux.create(240,320,CV_8UC1);
+    grayAux.create(240,320,CV_8UC1);
+    colorAux.create(240,320,CV_8UC1);
 
     //Visores de los histogramas
     visorHistoS = new ImgViewer(260,150, (QImage *) NULL, ui->histoFrameS);
@@ -43,12 +45,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->loadButton,SIGNAL(pressed()),this,SLOT(loadFromFile()));
     connect(ui->saveButton,SIGNAL(pressed()),this,SLOT(saveToFile()));
 
+
     //Botón de transformación de píxel
-    connect(ui->pixelTButton,SIGNAL(clicked(bool)),this,SLOT(setPixelTransformation()));
+    connect(ui->pixelTButton,SIGNAL(clicked()), &pixelTDialog, SLOT(show()));
+    connect(pixelTDialog.okButton,SIGNAL(clicked()),&pixelTDialog, SLOT(close()));
     //Boton de kernel
-    connect(ui->kernelButton,SIGNAL(clicked(bool)),this,SLOT(setKernel()));
+    connect(ui->kernelButton, SIGNAL(clicked()), &lFilterDialog, SLOT(show()));
+    connect(lFilterDialog.okButton, SIGNAL(clicked()), &lFilterDialog, SLOT(close()));
     //Botón de orden de operaciones
-    connect(ui->operOrderButton,SIGNAL(clicked(bool)),this,SLOT(setOperationOrder()));
+    connect(ui->operOrderButton,SIGNAL(clicked()),&operOrderDialog, SLOT(show()));
+    connect(operOrderDialog.okButton,SIGNAL(clicked(bool)), &operOrderDialog, SLOT(close()));
 
 
     timer.start(30);
@@ -75,6 +81,7 @@ void MainWindow::compute()
 
     }
 
+
     //Actualización de los visores
     if(!ui->colorButton->isChecked())
     {
@@ -82,9 +89,20 @@ void MainWindow::compute()
         updateHistograms(grayImage, visorHistoS);
         updateHistograms(destGrayImage, visorHistoD);
     }else{
-        selectOperation(colorImage, destColorImage, ui->selectOperation->currentIndex());
-        updateHistograms(colorImage, visorHistoS);
-        updateHistograms(destColorImage, visorHistoD);
+        Mat imgYUV;
+        std::vector<Mat> channels, dest;
+
+        cvtColor(colorImage, imgYUV, COLOR_RGB2YUV);
+        split(imgYUV, channels);
+
+        selectOperation(channels[0], colorAux, ui->selectOperation->currentIndex());
+
+        dest = {colorAux, channels[1], channels[2]};
+        merge(dest, imgYUV);
+        cvtColor(imgYUV, destColorImage, COLOR_YUV2RGB);
+
+        updateHistograms(channels[0], visorHistoS);
+        updateHistograms(colorAux, visorHistoD);
     }
 
     if(winSelected)
@@ -261,7 +279,7 @@ void MainWindow::transformPixel(Mat image, Mat destImage)
         numAux = (((i-orig2)*(new3-new2))/(orig3-orig2))+new2;
         tablaLUT[i] = numAux;
     }
-    for (int i = orig3; i < orig4; i++) {
+    for (int i = orig3; i <= orig4; i++) {
         numAux = (((i-orig3)*(new4-new3))/(orig4-orig3))+new3;
         tablaLUT[i] = numAux;
     }
@@ -271,28 +289,43 @@ void MainWindow::transformPixel(Mat image, Mat destImage)
 
 void MainWindow::thresholding(Mat image, Mat destImage)
 {
+//    Mat aux;
     cv::threshold(image, destImage, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
-    destImage.copyTo(destGrayImageAux);
+//    aux.copyTo(destImage);
+
+    if(!ui->colorButton->isChecked())
+        destImage.copyTo(destGrayImageAux);
+    else
+        destImage.copyTo(destColorImageAux);
 }
 
 void MainWindow::equalize(Mat image, Mat destImage)
 {
     cv::equalizeHist(image, destImage);
-    destImage.copyTo(destGrayImageAux);
+    if(!ui->colorButton->isChecked())
+        destImage.copyTo(destGrayImageAux);
+    else
+        destImage.copyTo(destColorImageAux);
+
 }
 
 void MainWindow::applyGaussianBlur(Mat image, Mat destImage)
 {
     double gaussValue = ui->gaussWidthBox->value()/5.0;
     cv::GaussianBlur(image, destImage, Size(ui->gaussWidthBox->value(), ui->gaussWidthBox->value()),gaussValue);
-    destGrayImage.copyTo(destGrayImageAux);
-
+    if(!ui->colorButton->isChecked())
+        destImage.copyTo(destGrayImageAux);
+    else
+        destImage.copyTo(destColorImageAux);
 }
 
 void MainWindow::applyMedianBlur(Mat image, Mat destImage)
 {
     cv::medianBlur(image, destImage, 3);
-    destGrayImage.copyTo(destGrayImageAux);
+    if(!ui->colorButton->isChecked())
+        destImage.copyTo(destGrayImageAux);
+    else
+        destImage.copyTo(destColorImageAux);
 }
 
 void MainWindow::applyKernel()
@@ -309,32 +342,39 @@ void MainWindow::applyKernel()
 
 }
 
-void MainWindow::setKernel()
-{
-    connect(ui->kernelButton, SIGNAL(clicked()), &lFilterDialog, SLOT(show()));
-    connect(lFilterDialog.okButton, SIGNAL(clicked()), &lFilterDialog, SLOT(close()));
-}
-
 void MainWindow::linearFilter(Mat image, Mat destImage)
 {
     applyKernel();
     cv::filter2D(image, destImage, CV_8U, kernel, Point(-1,-1), lFilterDialog.addedVBox->value());
+
 }
 
 void MainWindow::dilate(Mat image, Mat destImage)
 {
     Mat aux;
     cv::threshold(image, destImage, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
-    cv::dilate(destImage, destGrayImage, aux);
-    destGrayImage.copyTo(destImage);
+    if(!ui->colorButton->isChecked()){
+        cv::dilate(destImage, destGrayImage, aux);
+        destImage.copyTo(destGrayImageAux);
+    }
+    else{
+        cv::dilate(destImage, destColorImage, aux);
+        destImage.copyTo(destColorImageAux);
+    }
 }
 
 void MainWindow::erode(Mat image, Mat destImage)
 {
     Mat aux;
     cv::threshold(image, destImage,ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
-    cv::erode(destImage,destGrayImage,aux);
-    destGrayImage.copyTo(destImage);
+    if(!ui->colorButton->isChecked()){
+        cv::erode(destImage, destGrayImage, aux);
+        destImage.copyTo(destGrayImageAux);
+    }
+    else{
+        cv::erode(destImage, destColorImage, aux);
+        destImage.copyTo(destColorImageAux);
+    }
 }
 
 void MainWindow::applySeveral(Mat image, Mat destImage)
@@ -350,20 +390,6 @@ void MainWindow::applySeveral(Mat image, Mat destImage)
 
     if(operOrderDialog.fourthOperCheckBox->isChecked())
         selectOperation(image, destImage,operOrderDialog.operationComboBox4->currentIndex());
-}
-
-
-void MainWindow::setPixelTransformation()
-{
-    connect(ui->pixelTButton,SIGNAL(clicked(bool)), &pixelTDialog, SLOT(show()));
-    connect(pixelTDialog.okButton,SIGNAL(clicked(bool)),&pixelTDialog, SLOT(close()));
-}
-
-
-void MainWindow::setOperationOrder()
-{
-    connect(ui->operOrderButton,SIGNAL(clicked(bool)),&operOrderDialog, SLOT(show()));
-    connect(operOrderDialog.okButton,SIGNAL(clicked(bool)), &operOrderDialog, SLOT(close()));
 }
 
 
