@@ -45,13 +45,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Botón de transformación de píxel
     connect(ui->pixelTButton,SIGNAL(clicked(bool)),this,SLOT(setPixelTransformation()));
-
     //Boton de kernel
     connect(ui->kernelButton,SIGNAL(clicked(bool)),this,SLOT(setKernel()));
-
     //Botón de orden de operaciones
     connect(ui->operOrderButton,SIGNAL(clicked(bool)),this,SLOT(setOperationOrder()));
-
 
 
     timer.start(30);
@@ -68,7 +65,6 @@ MainWindow::~MainWindow()
 void MainWindow::compute()
 {
     //Captura de imagen
-
     if(ui->captureButton->isChecked() && cap->isOpened())
     {
         *cap >> colorImage;
@@ -258,17 +254,17 @@ void MainWindow::transformPixel(Mat image, Mat destImage)
 
     float numAux = 0.;
     for (int i = orig1; i < orig2; i++) {
-            numAux = (((i-orig1)*(new2-new1))/(orig2-orig1))+new1;
-            tablaLUT[i] = numAux;
-        }
+        numAux = (((i-orig1)*(new2-new1))/(orig2-orig1))+new1;
+        tablaLUT[i] = numAux;
+    }
     for (int i = orig2; i < orig3; i++) {
-            numAux = (((i-orig2)*(new3-new2))/(orig3-orig2))+new2;
-            tablaLUT[i] = numAux;
-        }
+        numAux = (((i-orig2)*(new3-new2))/(orig3-orig2))+new2;
+        tablaLUT[i] = numAux;
+    }
     for (int i = orig3; i < orig4; i++) {
-            numAux = (((i-orig3)*(new4-new3))/(orig4-orig3))+new3;
-            tablaLUT[i] = numAux;
-        }
+        numAux = (((i-orig3)*(new4-new3))/(orig4-orig3))+new3;
+        tablaLUT[i] = numAux;
+    }
 
     LUT(image, tablaLUT, destImage);
 }
@@ -299,12 +295,8 @@ void MainWindow::applyMedianBlur(Mat image, Mat destImage)
     destGrayImage.copyTo(destGrayImageAux);
 }
 
-void MainWindow::setKernel()
+void MainWindow::applyKernel()
 {
-    connect(ui->kernelButton, SIGNAL(clicked()), &lFilterDialog, SLOT(show()));
-    connect(lFilterDialog.okButton, SIGNAL(clicked()), &lFilterDialog, SLOT(close()));
-
-    printf("set kernel \n");
     kernel.at<float>(0,0)=lFilterDialog.kernelBox11->value();
     kernel.at<float>(0,1)=lFilterDialog.kernelBox12->value();
     kernel.at<float>(0,2)=lFilterDialog.kernelBox13->value();
@@ -314,11 +306,18 @@ void MainWindow::setKernel()
     kernel.at<float>(2,0)=lFilterDialog.kernelBox31->value();
     kernel.at<float>(2,1)=lFilterDialog.kernelBox32->value();
     kernel.at<float>(2,2)=lFilterDialog.kernelBox33->value();
+
+}
+
+void MainWindow::setKernel()
+{
+    connect(ui->kernelButton, SIGNAL(clicked()), &lFilterDialog, SLOT(show()));
+    connect(lFilterDialog.okButton, SIGNAL(clicked()), &lFilterDialog, SLOT(close()));
 }
 
 void MainWindow::linearFilter(Mat image, Mat destImage)
 {
-    setKernel();
+    applyKernel();
     cv::filter2D(image, destImage, CV_8U, kernel, Point(-1,-1), lFilterDialog.addedVBox->value());
 }
 

@@ -107,6 +107,7 @@ public slots:
     void equalize(Mat image, Mat destImage);
     void applyGaussianBlur(Mat image, Mat destImage);
     void applyMedianBlur(Mat image, Mat destImage);
+    void applyKernel();
     void linearFilter(Mat image, Mat destImage);
     void dilate(Mat image, Mat destImage);
     void erode(Mat image, Mat destImage);
