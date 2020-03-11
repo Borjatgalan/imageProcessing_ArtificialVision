@@ -8,6 +8,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->selectOperation->setCurrentIndex(-1);
+
     cap = new VideoCapture(0);
     winSelected = false;
 
@@ -42,18 +44,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->saveButton,SIGNAL(pressed()),this,SLOT(saveToFile()));
 
     //Botón de transformación de píxel
-    transformPixel();
     connect(ui->pixelTButton,SIGNAL(clicked()), &pixelTDialog, SLOT(show()));
     connect(ui->pixelTButton,SIGNAL(clicked()),this,SLOT(setPixelTransformation()));
     connect(pixelTDialog.okButton,SIGNAL(clicked()),&pixelTDialog, SLOT(close()));
 
     //Botón de orden de operaciones
-    connect(ui->operOrderButton,SIGNAL(clicked()),&operationOrder, SLOT(show()));
-    connect(ui->operOrderButton,SIGNAL(clicked()),this,SLOT(setOperationOrder()));
-    connect(operationOrder.okButton,SIGNAL(clicked()), &operationOrder, SLOT(close()));
+    connect(ui->operOrderButton,SIGNAL(clicked(bool)),this,SLOT(setOperationOrder()));
+    connect(ui->operOrderButton,SIGNAL(clicked(bool)),&operOrderDialog, SLOT(show()));
+    connect(operOrderDialog.okButton,SIGNAL(clicked(bool)), &operOrderDialog, SLOT(close()));
 
 
-    connect(ui->kernelButton,SIGNAL(clicked()),this,SLOT(setKernel()));
+    connect(ui->kernelButton,SIGNAL(clicked(bool)),this,SLOT(setKernel()));
 
 
 
@@ -87,11 +88,11 @@ void MainWindow::compute()
     //Actualización de los visores
     if(!ui->colorButton->isChecked())
     {
-        selectOperation(grayImage, destGrayImage);
+        selectOperation(grayImage, destGrayImage, ui->selectOperation->currentIndex());
         updateHistograms(grayImage, visorHistoS);
         updateHistograms(destGrayImage, visorHistoD);
     }else{
-        selectOperation(colorImage, destColorImage);
+        selectOperation(colorImage, destColorImage, ui->selectOperation->currentIndex());
         updateHistograms(colorImage, visorHistoS);
         updateHistograms(destColorImage, visorHistoD);
     }
@@ -245,9 +246,10 @@ void MainWindow::saveToFile()
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
 }
 
-void MainWindow::transformPixel()
+void MainWindow::transformPixel(Mat image, Mat destImage)
 {
     tablaLUT.resize(256);
+
     //Pixeles de origen en la matriz
     float orig1 = pixelTDialog.origPixelBox1->value();
     float orig2 = pixelTDialog.origPixelBox2->value();
@@ -260,18 +262,21 @@ void MainWindow::transformPixel()
     float new3 = pixelTDialog.newPixelBox3->value();
     float new4 = pixelTDialog.newPixelBox4->value();
 
+    float numAux = 0.;
     for (int i = orig1; i < orig2; i++) {
-            float numAux = (((i-orig1)*(new2-new1))/(orig2-orig1))+new1;
+            numAux = (((i-orig1)*(new2-new1))/(orig2-orig1))+new1;
             tablaLUT[i] = numAux;
         }
     for (int i = orig2; i < orig3; i++) {
-            float numAux = (((i-orig2)*(new3-new2))/(orig3-orig2))+new2;
+            numAux = (((i-orig2)*(new3-new2))/(orig3-orig2))+new2;
             tablaLUT[i] = numAux;
         }
     for (int i = orig3; i < orig4; i++) {
-            float numAux = (((i-orig3)*(new4-new3))/(orig4-orig3))+new3;
+            numAux = (((i-orig3)*(new4-new3))/(orig4-orig3))+new3;
             tablaLUT[i] = numAux;
         }
+
+    LUT(image, tablaLUT, destGrayImage);
 }
 
 void MainWindow::thresholding(Mat image, Mat destImage)
@@ -337,11 +342,6 @@ void MainWindow::erode(Mat image, Mat destImage)
 }
 
 
-void MainWindow::applySeveral(Mat image, Mat destImage)
-{
-
-}
-
 void MainWindow::setPixelTransformation()
 {
 
@@ -350,23 +350,26 @@ void MainWindow::setPixelTransformation()
 
 void MainWindow::setOperationOrder()
 {
-    if(operationOrder.firstOperCheckBox->isChecked() == true)
-        selectOperation(grayImage, destGrayImageAux);
-    if(operationOrder.secondOperCheckBox->isChecked() == true)
-        selectOperation(grayImage, destGrayImageAux);
-    if(operationOrder.thirdOperCheckBox->isChecked() == true)
-        selectOperation(grayImage, destGrayImageAux);
-    if(operationOrder.fourthOperCheckBox->isChecked() == true)
-        selectOperation(grayImage, destGrayImageAux);
+    if(operOrderDialog.firstOperCheckBox->isChecked())
+        selectOperation(grayImage, destGrayImage,operOrderDialog.operationComboBox1->currentIndex());
+
+    if(operOrderDialog.secondOperCheckBox->isChecked())
+        selectOperation(grayImage, destGrayImage,operOrderDialog.operationComboBox2->currentIndex());
+
+    if(operOrderDialog.thirdOperCheckBox->isChecked())
+        selectOperation(grayImage, destGrayImage,operOrderDialog.operationComboBox3->currentIndex());
+
+    if(operOrderDialog.fourthOperCheckBox->isChecked())
+        selectOperation(grayImage, destGrayImage,operOrderDialog.operationComboBox4->currentIndex());
+
 }
 
-void MainWindow::selectOperation(Mat image, Mat destImage)
+void MainWindow::selectOperation(Mat image, Mat destImage, int option)
 {
 
-    switch(ui->selectOperation->currentIndex()){
+    switch(option){
     case 0:
-        cv::LUT(image, tablaLUT, destGrayImage);
-        destGrayImage.copyTo(destImage);
+        transformPixel(image, destImage);
         break;
     case 1:
         thresholding(image, destImage);

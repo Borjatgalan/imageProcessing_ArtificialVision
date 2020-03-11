@@ -71,10 +71,13 @@ public:
     ~MainWindow();
 
 private:
+    //Interfaz principal de usuario
     Ui::MainWindow *ui;
+    //Dialogos
     PixelTDialog pixelTDialog;
     LFilterDialog lFilterDialog;
     OperOrderDialog operOrderDialog;
+    //Timer
     QTimer timer;
 
     VideoCapture *cap;
@@ -83,7 +86,8 @@ private:
     Mat destColorImageAux, destGrayImageAux;
     bool winSelected;
     Rect imageWindow;
-    OperOrderDialog operationOrder;
+
+
 
     std::vector<uchar> tablaLUT;
     Mat kernel;
@@ -98,7 +102,7 @@ public slots:
     void deselectWindow();
     void loadFromFile();
     void saveToFile();
-    void transformPixel();
+    void transformPixel(Mat image, Mat destImage);
     void thresholding(Mat image, Mat destImage);
     void equalize(Mat image, Mat destImage);
     void applyGaussianBlur(Mat image, Mat destImage);
@@ -106,13 +110,13 @@ public slots:
     void linearFilter(Mat image, Mat destImage);
     void dilate(Mat image, Mat destImage);
     void erode(Mat image, Mat destImage);
-    void applySeveral(Mat image, Mat destImage);
+
 
     void setPixelTransformation();
     void setKernel();
     void setOperationOrder();
 
-    void selectOperation(Mat image, Mat destImage);
+    void selectOperation(Mat image, Mat destImage, int option);
 };
 
 
