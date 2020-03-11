@@ -44,23 +44,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->saveButton,SIGNAL(pressed()),this,SLOT(saveToFile()));
 
     //Botón de transformación de píxel
-    connect(ui->pixelTButton,SIGNAL(clicked()), &pixelTDialog, SLOT(show()));
-    connect(ui->pixelTButton,SIGNAL(clicked()),this,SLOT(setPixelTransformation()));
-    connect(pixelTDialog.okButton,SIGNAL(clicked()),&pixelTDialog, SLOT(close()));
+    connect(ui->pixelTButton,SIGNAL(clicked(bool)),this,SLOT(setPixelTransformation()));
+
+    //Boton de kernel
+    connect(ui->kernelButton,SIGNAL(clicked(bool)),this,SLOT(setKernel()));
 
     //Botón de orden de operaciones
     connect(ui->operOrderButton,SIGNAL(clicked(bool)),this,SLOT(setOperationOrder()));
-    connect(ui->operOrderButton,SIGNAL(clicked(bool)),&operOrderDialog, SLOT(show()));
-    connect(operOrderDialog.okButton,SIGNAL(clicked(bool)), &operOrderDialog, SLOT(close()));
-
-
-    connect(ui->kernelButton,SIGNAL(clicked(bool)),this,SLOT(setKernel()));
 
 
 
     timer.start(30);
-
-
 }
 
 MainWindow::~MainWindow()
@@ -276,7 +270,7 @@ void MainWindow::transformPixel(Mat image, Mat destImage)
             tablaLUT[i] = numAux;
         }
 
-    LUT(image, tablaLUT, destGrayImage);
+    LUT(image, tablaLUT, destImage);
 }
 
 void MainWindow::thresholding(Mat image, Mat destImage)
@@ -307,6 +301,9 @@ void MainWindow::applyMedianBlur(Mat image, Mat destImage)
 
 void MainWindow::setKernel()
 {
+    connect(ui->kernelButton, SIGNAL(clicked()), &lFilterDialog, SLOT(show()));
+    connect(lFilterDialog.okButton, SIGNAL(clicked()), &lFilterDialog, SLOT(close()));
+
     printf("set kernel \n");
     kernel.at<float>(0,0)=lFilterDialog.kernelBox11->value();
     kernel.at<float>(0,1)=lFilterDialog.kernelBox12->value();
@@ -341,28 +338,35 @@ void MainWindow::erode(Mat image, Mat destImage)
     destGrayImage.copyTo(destImage);
 }
 
+void MainWindow::applySeveral(Mat image, Mat destImage)
+{
+    if(operOrderDialog.firstOperCheckBox->isChecked())
+        selectOperation(image, destImage,operOrderDialog.operationComboBox1->currentIndex());
+
+    if(operOrderDialog.secondOperCheckBox->isChecked())
+        selectOperation(image, destImage,operOrderDialog.operationComboBox2->currentIndex());
+
+    if(operOrderDialog.thirdOperCheckBox->isChecked())
+        selectOperation(image, destImage,operOrderDialog.operationComboBox3->currentIndex());
+
+    if(operOrderDialog.fourthOperCheckBox->isChecked())
+        selectOperation(image, destImage,operOrderDialog.operationComboBox4->currentIndex());
+}
+
 
 void MainWindow::setPixelTransformation()
 {
-
+    connect(ui->pixelTButton,SIGNAL(clicked(bool)), &pixelTDialog, SLOT(show()));
+    connect(pixelTDialog.okButton,SIGNAL(clicked(bool)),&pixelTDialog, SLOT(close()));
 }
 
 
 void MainWindow::setOperationOrder()
 {
-    if(operOrderDialog.firstOperCheckBox->isChecked())
-        selectOperation(grayImage, destGrayImage,operOrderDialog.operationComboBox1->currentIndex());
-
-    if(operOrderDialog.secondOperCheckBox->isChecked())
-        selectOperation(grayImage, destGrayImage,operOrderDialog.operationComboBox2->currentIndex());
-
-    if(operOrderDialog.thirdOperCheckBox->isChecked())
-        selectOperation(grayImage, destGrayImage,operOrderDialog.operationComboBox3->currentIndex());
-
-    if(operOrderDialog.fourthOperCheckBox->isChecked())
-        selectOperation(grayImage, destGrayImage,operOrderDialog.operationComboBox4->currentIndex());
-
+    connect(ui->operOrderButton,SIGNAL(clicked(bool)),&operOrderDialog, SLOT(show()));
+    connect(operOrderDialog.okButton,SIGNAL(clicked(bool)), &operOrderDialog, SLOT(close()));
 }
+
 
 void MainWindow::selectOperation(Mat image, Mat destImage, int option)
 {
@@ -393,7 +397,7 @@ void MainWindow::selectOperation(Mat image, Mat destImage, int option)
         erode(image, destImage);
         break;
     case 8:
-        setOperationOrder();
+        applySeveral(image, destImage);
         break;
 
 
